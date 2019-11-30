@@ -1,3 +1,7 @@
 body {
-    background-color: purple;
+    background-color: #202020;
+}
+
+canvas {
+    background-color: lightgrey;
 }
