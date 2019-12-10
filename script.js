@@ -4,8 +4,8 @@ const ctx = canvas.getContext('2d');
 class Balle {
     constructor(canvas, rayon){
         this.canvas = canvas, this.ctx = canvas.getContext('2d');
-        this.vX = 1, this.vY = 1;                                   // Vecteur directeur (dans le repère du canvas)
-        this.X = Math.floor(Math.random()*canvas.width), this.Y = 1;      // Coordonées de départ
+        this.vX = 3, this.vY = 3;                                   // Vecteur directeur (dans le repère du canvas)
+        this.X = Math.floor(Math.random()*canvas.width), this.Y = 0;      // Coordonées de départ
         this.rayon = rayon;
     }
     
@@ -17,14 +17,18 @@ class Balle {
     }
     
     avancer(planche){                                   // On met la planche en argument afin de calculer un éventuel rebond
+        this.X += this.vX;
+        this.Y += this.vY;
         if (this.X<0 || this.X>canvas.width){
             this.vX *= -1;
         }
-        if (this.Y<0 || (this.Y+this.rayon===this.canvas.height-planche.alti && planche.X-(planche.l/2)<this.X && this.X<planche.X+planche.l/2)){
+        if (this.Y<0){
             this.vY *= -1;
         }
-        this.X += this.vX;
-        this.Y += this.vY;
+        if (this.Y+this.rayon>=this.canvas.height-planche.alti && this.Y+this.rayon<=this.canvas.height-(planche.alti-planche.ep) && planche.X-(planche.l/2)<this.X && this.X<planche.X+planche.l/2){
+            this.Y = this.canvas.height-(planche.alti+1)-this.rayon;
+            this.vY *= -1;
+        }
     }
     
 }
@@ -53,7 +57,7 @@ window.setInterval((t)=>{
     b.avancer(p);
     b.dessiner();
     p.dessiner();
-},5
+},10
 );
 
 canvas.onmousemove = (e)=>{
