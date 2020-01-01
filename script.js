@@ -3,7 +3,7 @@ class Balle {
         this.canvas = canvas, this.ctx = canvas.getContext('2d');
         this.rayon = rayon;
         this.vX = 3, this.vY = 3;                                   // Vecteur directeur (dans le repère du canvas)
-        this.x = Math.floor(Math.random()*canvas.width-2*this.rayon)+this.rayon, this.y = rayon;      // Coordonées de départ
+        this.x = Math.floor(Math.random()*(canvas.width-2*this.rayon))+this.rayon, this.y = rayon;      // Coordonées de départ
         this.planche = planche;
     }
 
@@ -81,8 +81,9 @@ class Jeu {
         this.canvas = document.querySelector("canvas");
         this.p = new Planche(this.canvas, 30, 100, 10);
         this.b = new Balle(this.canvas, 10, this.p);
+        this.pause = false;
         //this.briques = [new Brique(this.canvas, 50, 50, 50, 50), new Brique(this.canvas, 250, 100, 60, 20), new Brique(this.canvas, 200, 100, 30, 25), new Brique(this.canvas, 160, 150, 30, 25), new Brique(this.canvas, 180, 145, 34, 22),new Brique(this.canvas, 300, 40, 42, 17), new Brique(this.canvas, 350, 40, 42, 23)];
-        this.briques = Array(20).fill(null).map(e=>{
+        this.briques = Array(35).fill(null).map(e=>{
             const x = Math.floor(Math.random()*this.canvas.width), y = Math.floor(Math.random()*this.canvas.height/3);
             const L = Math.floor(Math.random()*15)+35
             return new Brique(this.canvas, x, y, L, 15);
@@ -98,6 +99,14 @@ class Jeu {
                 case "ArrowRight":
                     this.p.dep = +4;
                     break;
+                case " ":
+                    if (this.pause){
+                        this.animation(this.inter);
+                    } else {
+                        this.stop()
+                    }
+                    this.pause = !(this.pause);
+                    break;
             }
         }
         document.onkeyup = (e)=> this.p.dep = 0;
@@ -105,6 +114,7 @@ class Jeu {
     }
 
     animation(intervale){
+        this.inter = intervale;
         this.intervaleId = window.setInterval((t)=>{
             this.canvas.getContext('2d').clearRect(0,0,this.canvas.width, this.canvas.height)
             this.b.avancer();
@@ -121,17 +131,26 @@ class Jeu {
                 ctx.font = "40px Arial";
                 ctx.fillStyle = "black"
                 ctx.fillText("Jeu terminé !", 10, 50);
-                window.clearInterval(this.intervaleId);
+                this.stop();
             }
         },intervale);
     }
+    
+    stop (){
+        window.clearInterval(this.intervaleId);
+    }
 }
 
-
-
+let jeu;
 
 window.onload = ()=>{
-    (new Jeu()).animation(10);
+    jeu = new Jeu();
+    jeu.animation(10);
 };
 
-document.querySelector("#rejouer").onclick = e=>(new Jeu()).animation(10)
+document.querySelector("#rejouer").onclick = e=>{
+    document.querySelector("#rejouer").blur();
+    jeu.stop();
+    jeu = new Jeu();
+    jeu.animation(10);
+}
