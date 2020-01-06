@@ -35,26 +35,11 @@ class Balle extends ElementJeu {
 }
 
 class Planche extends ElementJeu {
-    constructor(canvas, couleur, altitudetude, longueur, epaisseur){
+    constructor(canvas, couleur, altitude, longueur, epaisseur){
         super(canvas, couleur);
-        this.altitude = altitudetude, this.l = longueur, this.ep = epaisseur;
+        this.altitude = altitude, this.l = longueur, this.ep = epaisseur;
         this.x = canvas.width/2;
-        /*Contrôle avec la souris*/
-        this.canvas.addEventListener('mousemove', e=>{
-            this.x = e.offsetX;
-        });
-        /*Contrôle avec les touches du clavier*/
         this.deplacement = 0;
-        document.addEventListener('keydown', e=>{
-            switch (e.code){
-                case 'ArrowLeft':
-                    this.deplacement = -5;
-                    break;
-                case 'ArrowRight':
-                    this.deplacement = 5;
-                    break;
-            }
-        });
     }
 
     dessiner(){
@@ -65,8 +50,8 @@ class Planche extends ElementJeu {
         this.ctx.fill();
     }
     
-    touche(balle){
-    if (balle.y+balle.rayon >= this.canvas.height-this.altitude && balle.y+balle.rayon<=this.canvas.height-(this.altitude-this.ep) && this.x-(this.l/2)<balle.x && balle.x<this.x+this.l/2){
+    contact(balle){
+        if (balle.y+balle.rayon >= this.canvas.height-this.altitude && balle.y+balle.rayon<=this.canvas.height-(this.altitude-this.ep) && this.x-(this.l/2)<balle.x && balle.x<this.x+this.l/2){
             balle.y = this.canvas.height-(this.altitude+1)-balle.rayon;
             balle.vY *= -1;
         }
@@ -87,7 +72,7 @@ class Brique extends ElementJeu {
         this.ctx.fill();
     }
     
-    touche(balle){
+    contact(balle){
         if (this.x<balle.x && balle.x<this.x+this.L && this.y<balle.y && balle.y<this.y+this.l){
             if (this.y<balle.y-balle.vY && balle.y-balle.vY<this.y+this.l){                         // Quand la balle est arrivée par le coté
                 balle.vX *= -1;
@@ -105,6 +90,7 @@ class Jeu {
         /*Mise en place des éléments*/
         this.canvas = document.querySelector('canvas');
         this.ctx = this.canvas.getContext('2d');
+        this.score = 0;
         this.planche = new Planche(this.canvas, 'blue', 30, 100, 10);
         this.balle = new Balle(this.canvas, 'red', 10);
         this.briques = Array(35).fill(null).map(e=>{
@@ -113,22 +99,11 @@ class Jeu {
             const couleur = ["purple", "orange", "aqua", "green", "chocolate", "yellowgreen", "violet", "coral"][Math.floor(Math.random()*8)];
             return new Brique(this.canvas, couleur, x, y, L, 15);
         })
-        /*Données pour l'animation*/
-        document.addEventListener('keypress', e=>{
-            if (e.code === 'Space'){
-                if (this.pause){
-                    this.animation();
-                } else {
-                    this.stop();
-                }
-                this.pause = !(this.pause);
-            }
-        });
-        document.addEventListener('keyup', e=>{this.planche.deplacement = 0;});
-
+        this.planche.dessiner();
     }
 
     animation(intervale){
+        this.intervale = intervale;
         this.intervaleId = window.setInterval((t)=>{
             this.effacer();
             /*Balle*/
@@ -137,17 +112,11 @@ class Jeu {
             /*Planche*/
             this.planche.x += this.planche.deplacement;
             this.planche.dessiner();
-            this.planche.touche(this.balle);    // Dévie la balle si elle touche la raquette
+            this.planche.contact(this.balle);    // Dévie la balle si elle touche la raquette
             /*Dessine les briques*/
-            this.briques.forEach((brique, i, a)=>{
-                brique.dessiner();
-                if (brique.touche(this.balle)){
-                    a.splice(i, 1);                 // Détruit une brique si elle est touchée
-                }
-            });
-            /*Fin de la partie*/
+            this.briques = this.briques.filter(b => (b.dessiner(), !(b.contact(this.balle))));
             if (this.balle.y > this.canvas.height) this.fin();
-        }, intervale);
+        }, this.intervale);
     }
     
     effacer(){
@@ -156,6 +125,15 @@ class Jeu {
     
     stop(){
         window.clearInterval(this.intervaleId);
+    }
+    
+    marche_arret(){
+        if (this.pause){
+            this.animation(this.intervale);
+        } else {
+            this.stop();
+        }
+        this.pause = !(this.pause);
     }
     
     fin(){
@@ -167,15 +145,36 @@ class Jeu {
 }
 
 let jeu;
+jeu = new Jeu();
+jeu.animation(10);
 
-window.onload = ()=>{
-    jeu = new Jeu();
-    jeu.animation(10);
-};
-
-document.querySelector("#rejouer").onclick = e=>{
-    document.querySelector("#rejouer").blur();
+/*Rejouer*/
+document.querySelector("#rejouer").addEventListener('click', e=>{
+    e.target.blur();
     jeu.stop();
     jeu = new Jeu();
     jeu.animation(10);
-}
+})
+
+/*Pauses*/
+document.querySelector('#pause').addEventListener('click', e=>{
+    jeu.marche_arret();
+    e.target.blur();
+});
+window.addEventListener('keypress', e=>{if (e.code==='Space') jeu.marche_arret();});
+
+/*Planche*/
+jeu.canvas.addEventListener('mousemove', e=>{
+    jeu.planche.x = e.offsetX;
+});
+window.addEventListener('keydown', e=>{
+    switch (e.code){
+        case 'ArrowLeft':
+            jeu.planche.deplacement = -5;
+            break;
+        case 'ArrowRight':
+            jeu.planche.deplacement = 5;
+            break;
+    }
+});
+window.addEventListener('keyup', e=>{jeu.planche.deplacement = 0;});
