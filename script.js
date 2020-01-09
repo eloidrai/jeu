@@ -106,15 +106,14 @@ class Jeu {
         this.intervale = intervale;
         this.intervaleId = window.setInterval((t)=>{
             this.effacer();
-            /*Balle*/
             this.balle.avancer();
-            this.balle.dessiner();
             /*Planche*/
             this.planche.x += this.planche.deplacement;
             this.planche.dessiner();
             this.planche.contact(this.balle);    // Dévie la balle si elle touche la raquette
             /*Dessine les briques*/
-            this.briques = this.briques.filter(b => (b.dessiner(), !(b.contact(this.balle))));
+            this.briques = this.briques.filter(b => (b.dessiner(), !b.contact(this.balle)));
+            this.balle.dessiner();
             if (this.balle.y > this.canvas.height) this.fin();
         }, this.intervale);
     }
@@ -161,7 +160,7 @@ document.querySelector('#pause').addEventListener('click', e=>{
     jeu.marche_arret();
     e.target.blur();
 });
-window.addEventListener('keypress', e=>{if (e.code==='Space') jeu.marche_arret();});
+window.addEventListener('keypress', e=>{if (e.code==='Space') jeu.marche_arret()});
 
 /*Planche*/
 jeu.canvas.addEventListener('mousemove', e=>{
